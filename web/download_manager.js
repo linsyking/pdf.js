@@ -20,7 +20,7 @@ import { createValidAbsoluteUrl, isPdfFile } from "pdfjs-lib";
 if (typeof PDFJSDev !== "undefined" && !PDFJSDev.test("CHROME || GENERIC")) {
   throw new Error(
     'Module "pdfjs-web/download_manager" shall not be used ' +
-      "outside CHROME and GENERIC builds."
+    "outside CHROME and GENERIC builds."
   );
 }
 
@@ -118,6 +118,14 @@ class DownloadManager {
       }
       blobUrl = url + "#pdfjs.action=download";
     }
+    download(blobUrl, filename);
+  }
+
+  downloadjson(data, filename) {
+    let blobUrl;
+    blobUrl = URL.createObjectURL(
+      new Blob([JSON.stringify(data)], { type: "application/json" })
+    );
     download(blobUrl, filename);
   }
 }

@@ -92,7 +92,7 @@ import { SecondaryToolbar } from "web-secondary_toolbar";
 import { SignatureManager } from "web-signature_manager";
 import { Toolbar } from "web-toolbar";
 import { ViewHistory } from "./view_history.js";
-import * as annotpdf from './pdfAnnotate.js';
+import './pdfAnnotate.js';
 
 const FORCE_PAGES_LOADED_TIMEOUT = 10000; // ms
 
@@ -789,13 +789,11 @@ const PDFViewerApplication = {
 
     if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
       if (file) {
-        console.log(annotpdf);
-        const factory = await AnnotationFactory.loadFile(file);
-        factory.createTextAnnotation({
+        const factory = await pdfAnnotate.AnnotationFactory.loadFile(file);
+        factory.createFreeTextAnnotation({
           page: 0,
           rect: [50, 50, 80, 80],
-          contents: "Pop up note",
-          author: "Max"
+          contents: "Pop up note"
         });
         const new_data = factory.write();
         this.open({ data: new_data });
@@ -1203,9 +1201,12 @@ const PDFViewerApplication = {
     // a message and change PdfjsChild.sys.mjs to take it into account.
     const { classList } = this.appConfig.appContainer;
     classList.add("wait");
-    await (this.pdfDocument?.annotationStorage.size > 0
-      ? this.save()
-      : this.download());
+    // await (this.pdfDocument?.annotationStorage.size > 0
+    //   ? this.save()
+    //   : this.download());
+    console.log("Saving annotation");
+    console.log(this.pdfDocument.annotationStorage.getAll());
+    this.downloadManager.downloadjson(this.pdfDocument.annotationStorage.serializable, this._docFilename + ".json");
     classList.remove("wait");
   },
 
