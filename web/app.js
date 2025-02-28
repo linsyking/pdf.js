@@ -789,6 +789,7 @@ const PDFViewerApplication = {
 
     if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
       if (file) {
+        // Initialize annotation
         const factory = await pdfAnnotate.AnnotationFactory.loadFile(file);
         factory.createFreeTextAnnotation({
           page: 0,
@@ -1192,6 +1193,23 @@ const PDFViewerApplication = {
     }
   },
 
+  serializeAnnotation() {
+    const annotations = this.pdfDocument.annotationStorage.getAll();
+
+    let highlights = [];
+    let textboxs = [];
+
+    for (const editor in annotations) {
+      editorserialized = annotations[editor].serialize();
+      boxes = editorserialized["quadPoints"]
+    }
+
+    return {
+      highlights,
+      textboxs
+    }
+  },
+
   async downloadOrSave() {
     // In the Firefox case, this method MUST always trigger a download.
     // When the user is closing a modified and unsaved document, we display a
@@ -1205,8 +1223,8 @@ const PDFViewerApplication = {
     //   ? this.save()
     //   : this.download());
     console.log("Saving annotation");
-    console.log(this.pdfDocument.annotationStorage.getAll());
-    this.downloadManager.downloadjson(this.pdfDocument.annotationStorage.serializable, this._docFilename + ".json");
+    const obj = this.serializeAnnotation();
+    // this.downloadManager.downloadjson(obj, this._docFilename + ".json");
     classList.remove("wait");
   },
 
