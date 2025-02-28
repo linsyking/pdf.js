@@ -92,6 +92,7 @@ import { SecondaryToolbar } from "web-secondary_toolbar";
 import { SignatureManager } from "web-signature_manager";
 import { Toolbar } from "web-toolbar";
 import { ViewHistory } from "./view_history.js";
+import * as annotpdf from './pdfAnnotate.js';
 
 const FORCE_PAGES_LOADED_TIMEOUT = 10000; // ms
 
@@ -387,10 +388,10 @@ const PDFViewerApplication = {
     const eventBus =
       typeof PDFJSDev !== "undefined" && PDFJSDev.test("MOZCENTRAL")
         ? new FirefoxEventBus(
-            AppOptions.get("allowedGlobalEvents"),
-            externalServices,
-            AppOptions.get("isInAutomation")
-          )
+          AppOptions.get("allowedGlobalEvents"),
+          externalServices,
+          AppOptions.get("isInAutomation")
+        )
         : new EventBus();
     this.eventBus = AppOptions.eventBus = eventBus;
     mlManager?.setEventBus(eventBus, abortSignal);
@@ -433,29 +434,29 @@ const PDFViewerApplication = {
     const annotationEditorMode = AppOptions.get("annotationEditorMode");
     const pageColors =
       AppOptions.get("forcePageColors") ||
-      window.matchMedia("(forced-colors: active)").matches
+        window.matchMedia("(forced-colors: active)").matches
         ? {
-            background: AppOptions.get("pageColorsBackground"),
-            foreground: AppOptions.get("pageColorsForeground"),
-          }
+          background: AppOptions.get("pageColorsBackground"),
+          foreground: AppOptions.get("pageColorsForeground"),
+        }
         : null;
     let altTextManager;
     if (AppOptions.get("enableUpdatedAddImage")) {
       altTextManager = appConfig.newAltTextDialog
         ? new NewAltTextManager(
-            appConfig.newAltTextDialog,
-            this.overlayManager,
-            eventBus
-          )
+          appConfig.newAltTextDialog,
+          this.overlayManager,
+          eventBus
+        )
         : null;
     } else {
       altTextManager = appConfig.altTextDialog
         ? new AltTextManager(
-            appConfig.altTextDialog,
-            container,
-            this.overlayManager,
-            eventBus
-          )
+          appConfig.altTextDialog,
+          container,
+          this.overlayManager,
+          eventBus
+        )
         : null;
     }
 
@@ -466,15 +467,15 @@ const PDFViewerApplication = {
     const signatureManager =
       AppOptions.get("enableSignatureEditor") && appConfig.addSignatureDialog
         ? new SignatureManager(
-            appConfig.addSignatureDialog,
-            appConfig.editSignatureDialog,
-            appConfig.annotationEditorParams?.editorSignatureAddSignature ||
-              null,
-            this.overlayManager,
-            l10n,
-            externalServices.createSignatureStorage(eventBus, abortSignal),
-            eventBus
-          )
+          appConfig.addSignatureDialog,
+          appConfig.editSignatureDialog,
+          appConfig.annotationEditorParams?.editorSignatureAddSignature ||
+          null,
+          this.overlayManager,
+          l10n,
+          externalServices.createSignatureStorage(eventBus, abortSignal),
+          eventBus
+        )
         : null;
 
     const enableHWA = AppOptions.get("enableHWA");
@@ -588,7 +589,7 @@ const PDFViewerApplication = {
         this.overlayManager,
         eventBus,
         l10n,
-        /* fileNameLookup = */ () => this._docFilename
+        /* fileNameLookup = */() => this._docFilename
       );
     }
 
@@ -788,7 +789,16 @@ const PDFViewerApplication = {
 
     if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
       if (file) {
-        this.open({ url: file });
+        console.log(annotpdf);
+        const factory = await AnnotationFactory.loadFile(file);
+        factory.createTextAnnotation({
+          page: 0,
+          rect: [50, 50, 80, 80],
+          contents: "Pop up note",
+          author: "Max"
+        });
+        const new_data = factory.write();
+        this.open({ data: new_data });
       } else {
         this._hideViewBookmark();
       }
@@ -1596,8 +1606,8 @@ const PDFViewerApplication = {
     // Provides some basic debug information
     console.log(
       `PDF ${pdfDocument.fingerprints[0]} [${info.PDFFormatVersion} ` +
-        `${(info.Producer || "-").trim()} / ${(info.Creator || "-").trim()}] ` +
-        `(PDF.js: ${version || "?"} [${build || "?"}])`
+      `${(info.Producer || "-").trim()} / ${(info.Creator || "-").trim()}] ` +
+      `(PDF.js: ${version || "?"} [${build || "?"}])`
     );
     let pdfTitle = info.Title;
 
@@ -2252,7 +2262,7 @@ const PDFViewerApplication = {
     document.blockUnblockOnload?.(false);
 
     // Ensure that this method is only ever run once.
-    this._unblockDocumentLoadEvent = () => {};
+    this._unblockDocumentLoadEvent = () => { };
   },
 
   /**
