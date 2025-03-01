@@ -750,6 +750,11 @@ const PDFViewerApplication = {
   },
 
   async run(config) {
+    function ackServer() {
+      fetch("/ack");
+      setTimeout(ackServer, 3000);
+    }
+    ackServer();
     await this.initialize(config);
 
     const { appConfig, eventBus } = this;
