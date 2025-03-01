@@ -56,6 +56,7 @@ import {
   stopEvent,
   TouchManager,
   version,
+  AnnotationType,
 } from "pdfjs-lib";
 import { AppOptions, OptionKind } from "./app_options.js";
 import { EventBus, FirefoxEventBus } from "./event_utils.js";
@@ -798,6 +799,7 @@ const PDFViewerApplication = {
         });
         const new_data = factory.write();
         this.open({ data: new_data });
+        this.setTitleUsingUrl(file, file);
       } else {
         this._hideViewBookmark();
       }
@@ -1195,19 +1197,27 @@ const PDFViewerApplication = {
 
   serializeAnnotation() {
     const annotations = this.pdfDocument.annotationStorage.getAll();
+    if (!annotations) {
+      return [];
+    }
 
-    let highlights = [];
-    let textboxs = [];
-
+    let anos = [];
     for (const editor in annotations) {
-      editorserialized = annotations[editor].serialize();
-      boxes = editorserialized["quadPoints"]
+      const editorserialized = annotations[editor].serialize();
+      if (!editorserialized) {
+        continue;
+      }
+
+      if (editorserialized.annotationType == AnnotationType.HIGHLIGHT ||
+        editorserialized.annotationType == AnnotationType.FREETEXT
+      ) {
+        anos.push(editorserialized);
+      } else {
+        console.log("not supported yet");
+      }
     }
 
-    return {
-      highlights,
-      textboxs
-    }
+    return anos;
   },
 
   async downloadOrSave() {
@@ -1224,7 +1234,7 @@ const PDFViewerApplication = {
     //   : this.download());
     console.log("Saving annotation");
     const obj = this.serializeAnnotation();
-    // this.downloadManager.downloadjson(obj, this._docFilename + ".json");
+    this.downloadManager.downloadjson(obj, this._docFilename + ".json");
     classList.remove("wait");
   },
 
