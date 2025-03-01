@@ -721,9 +721,9 @@ const PDFViewerApplication = {
           page: annotation.pageIndex,
           rect: annotation.rect,
           color: {
-            r: color["0"]/255.0,
-            g: color["1"]/255.0,
-            b: color["2"]/255.0,
+            r: color["0"] / 255.0,
+            g: color["1"] / 255.0,
+            b: color["2"] / 255.0,
           },
           opacity: annotation.opacity,
           quadPoints: quadPoints,
@@ -736,9 +736,9 @@ const PDFViewerApplication = {
           fontSize: annotation.defaultAppearanceData.fontSize,
           contents: annotation.contentsObj.str,
           textColor: {
-            r: fontColor["0"]/255.0,
-            g: fontColor["1"]/255.0,
-            b: fontColor["2"]/255.0,
+            r: fontColor["0"] / 255.0,
+            g: fontColor["1"] / 255.0,
+            b: fontColor["2"] / 255.0,
           },
         });
       } else {
@@ -1233,8 +1233,16 @@ const PDFViewerApplication = {
         }
       }
 
+      fetch("/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(totanns),
+      });
+
       // this.downloadManager.download(data, this._downloadUrl, this._docFilename);
-      this.downloadManager.downloadjson(totanns, this._docFilename + ".json");
+      // this.downloadManager.downloadjson(totanns, this._docFilename + ".json");
     } catch (reason) {
       // When the PDF document isn't ready, fallback to a "regular" download.
       console.error(`Error when saving the document:`, reason);
