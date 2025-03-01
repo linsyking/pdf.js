@@ -97,6 +97,8 @@ import './pdfAnnotate.js';
 
 const FORCE_PAGES_LOADED_TIMEOUT = 10000; // ms
 
+const invoke = window.__TAURI__.core.invoke;
+
 const ViewOnLoad = {
   UNKNOWN: -1,
   PREVIOUS: 0, // Default value.
@@ -709,7 +711,8 @@ const PDFViewerApplication = {
   },
 
   async annotateFile(file, annotations) {
-    const factory = await pdfAnnotate.AnnotationFactory.loadFile(file);
+    const data = await invoke("file");
+    const factory = new pdfAnnotate.AnnotationFactory(data);
     for (const annotation of annotations) {
       if (annotation.annotationType == AnnotationType.HIGHLIGHT) {
         const color = annotation.color;
@@ -750,11 +753,6 @@ const PDFViewerApplication = {
   },
 
   async run(config) {
-    function ackServer() {
-      fetch("/ack");
-      setTimeout(ackServer, 3000);
-    }
-    ackServer();
     await this.initialize(config);
 
     const { appConfig, eventBus } = this;
@@ -838,13 +836,22 @@ const PDFViewerApplication = {
       if (file) {
         // Initialize annotation
         this.setTitleUsingUrl(file, file);
-        const config_json = await fetch(this.url + ".json");
-        if (config_json.ok) {
-          const annotations = await config_json.json();
+        try{
+          const config_json = await invoke("getconfig");
+          const annotations = JSON.parse(config_json);
           await this.annotateFile(file, annotations);
-        } else {
-          this.open({ url: file });
+        } catch (e) {
+          console.log(e);
+          const data = await invoke("file");
+          this.open({ data });
         }
+        // if (config_json != "") {
+        //   const annotations = JSON.parse(config_json);
+        //   await this.annotateFile(file, annotations);
+        // } else {
+        //   const data = await invoke("file");
+        //   this.open({ data });
+        // }
 
       } else {
         this._hideViewBookmark();
@@ -1237,14 +1244,7 @@ const PDFViewerApplication = {
           }
         }
       }
-
-      fetch("/update", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(totanns),
-      });
+      invoke("save", {data: JSON.stringify(totanns)});
 
       // this.downloadManager.download(data, this._downloadUrl, this._docFilename);
       // this.downloadManager.downloadjson(totanns, this._docFilename + ".json");
