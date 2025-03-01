@@ -708,6 +708,47 @@ const PDFViewerApplication = {
     }
   },
 
+  async annotateFile(file, annotations) {
+    const factory = await pdfAnnotate.AnnotationFactory.loadFile(file);
+    for (const annotation of annotations) {
+      if (annotation.annotationType == AnnotationType.HIGHLIGHT) {
+        const color = annotation.color;
+        let quadPoints = [];
+        for (const key in annotation.quadPoints) {
+          quadPoints.push(annotation.quadPoints[key]);
+        }
+        factory.createHighlightAnnotation({
+          page: annotation.pageIndex,
+          rect: annotation.rect,
+          color: {
+            r: color["0"]/255.0,
+            g: color["1"]/255.0,
+            b: color["2"]/255.0,
+          },
+          opacity: annotation.opacity,
+          quadPoints: quadPoints,
+        });
+      } else if (annotation.annotationType == AnnotationType.FREETEXT) {
+        const fontColor = annotation.defaultAppearanceData.fontColor;
+        factory.createFreeTextAnnotation({
+          page: annotation.pageIndex,
+          rect: annotation.rect,
+          fontSize: annotation.defaultAppearanceData.fontSize,
+          contents: annotation.contentsObj.str,
+          textColor: {
+            r: fontColor["0"]/255.0,
+            g: fontColor["1"]/255.0,
+            b: fontColor["2"]/255.0,
+          },
+        });
+      } else {
+        console.error("Annotation type not supported");
+      }
+    }
+    const new_data = factory.write();
+    this.open({ data: new_data });
+  },
+
   async run(config) {
     await this.initialize(config);
 
@@ -791,15 +832,15 @@ const PDFViewerApplication = {
     if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
       if (file) {
         // Initialize annotation
-        const factory = await pdfAnnotate.AnnotationFactory.loadFile(file);
-        factory.createFreeTextAnnotation({
-          page: 0,
-          rect: [50, 50, 80, 80],
-          contents: "Pop up note"
-        });
-        const new_data = factory.write();
-        this.open({ data: new_data });
         this.setTitleUsingUrl(file, file);
+        const config_json = await fetch(this.url + ".json");
+        if (config_json.ok) {
+          const annotations = await config_json.json();
+          await this.annotateFile(file, annotations);
+        } else {
+          this.open({ url: file });
+        }
+
       } else {
         this._hideViewBookmark();
       }
@@ -1174,11 +1215,30 @@ const PDFViewerApplication = {
 
     try {
       const data = await this.pdfDocument.saveDocument();
-      this.downloadManager.download(data, this._downloadUrl, this._docFilename);
+      await this.open({ data, url: this.url });
+      let totanns = [];
+      const pageNum = await this.pdfDocument.numPages;
+      for (let i = 1; i <= pageNum; i++) {
+        const page = await this.pdfDocument.getPage(i);
+        const anns = await page.getAnnotations();
+        for (const ann of anns) {
+          ann.pageIndex = i - 1;
+          if (ann.annotationType == AnnotationType.HIGHLIGHT ||
+            ann.annotationType == AnnotationType.FREETEXT
+          ) {
+            totanns.push(ann);
+          } else {
+            console.log("not supported yet");
+          }
+        }
+      }
+
+      // this.downloadManager.download(data, this._downloadUrl, this._docFilename);
+      this.downloadManager.downloadjson(totanns, this._docFilename + ".json");
     } catch (reason) {
       // When the PDF document isn't ready, fallback to a "regular" download.
       console.error(`Error when saving the document:`, reason);
-      await this.download();
+      // await this.download();
     } finally {
       await this.pdfScriptingManager.dispatchDidSave();
       this._saveInProgress = false;
@@ -1195,31 +1255,6 @@ const PDFViewerApplication = {
     }
   },
 
-  serializeAnnotation() {
-    const annotations = this.pdfDocument.annotationStorage.getAll();
-    if (!annotations) {
-      return [];
-    }
-
-    let anos = [];
-    for (const editor in annotations) {
-      const editorserialized = annotations[editor].serialize();
-      if (!editorserialized) {
-        continue;
-      }
-
-      if (editorserialized.annotationType == AnnotationType.HIGHLIGHT ||
-        editorserialized.annotationType == AnnotationType.FREETEXT
-      ) {
-        anos.push(editorserialized);
-      } else {
-        console.log("not supported yet");
-      }
-    }
-
-    return anos;
-  },
-
   async downloadOrSave() {
     // In the Firefox case, this method MUST always trigger a download.
     // When the user is closing a modified and unsaved document, we display a
@@ -1232,9 +1267,9 @@ const PDFViewerApplication = {
     // await (this.pdfDocument?.annotationStorage.size > 0
     //   ? this.save()
     //   : this.download());
-    console.log("Saving annotation");
-    const obj = this.serializeAnnotation();
-    this.downloadManager.downloadjson(obj, this._docFilename + ".json");
+    if (this.pdfDocument?.annotationStorage.size > 0) {
+      await this.save();
+    }
     classList.remove("wait");
   },
 
