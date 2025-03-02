@@ -2892,7 +2892,7 @@ function onKeyDown(evt) {
           eventBus.dispatch("download", { source: window });
           handled = true;
           break;
-        case 27: // esc
+        case 27: // Esc
           document.getElementById("editorHighlightButton").click();
           handled = true;
           break;

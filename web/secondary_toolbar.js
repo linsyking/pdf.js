@@ -150,7 +150,7 @@ class SecondaryToolbar {
         close: true,
       },
     ];
-    if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+    if (typeof PDFJSDev === "undefined") {
       buttons.push({
         element: options.openFileButton,
         eventName: "openfile",

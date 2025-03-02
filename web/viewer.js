@@ -78,7 +78,10 @@ function getViewerConfiguration() {
       toolbar: document.getElementById("secondaryToolbar"),
       toggleButton: document.getElementById("secondaryToolbarToggleButton"),
       presentationModeButton: document.getElementById("presentationMode"),
-      openFileButton: null,
+      openFileButton:
+        typeof PDFJSDev === "undefined"
+          ? document.getElementById("secondaryOpenFile")
+          : null,
       printButton: document.getElementById("secondaryPrint"),
       downloadButton: document.getElementById("secondaryDownload"),
       viewBookmarkButton: document.getElementById("viewBookmark"),
