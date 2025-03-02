@@ -120,14 +120,6 @@ class DownloadManager {
     }
     download(blobUrl, filename);
   }
-
-  downloadjson(data, filename) {
-    let blobUrl;
-    blobUrl = URL.createObjectURL(
-      new Blob([JSON.stringify(data)], { type: "application/json" })
-    );
-    download(blobUrl, filename);
-  }
 }
 
 export { DownloadManager };
