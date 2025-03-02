@@ -519,6 +519,9 @@ class TextLayer {
     // the height matches the line height (which, when set to 1,
     // matches the actual font size).
     this.#minFontSize = div.getBoundingClientRect().height;
+    if (this.#minFontSize < 1) {
+      this.#minFontSize = 1;
+    }
     div.remove();
   }
 
@@ -548,7 +551,7 @@ class TextLayer {
       ) {
         warn(
           "Enable the `dom.textMetrics.fontBoundingBox.enabled` preference " +
-            "in `about:config` to improve TextLayer rendering."
+          "in `about:config` to improve TextLayer rendering."
         );
       }
       if (style.ascent) {
