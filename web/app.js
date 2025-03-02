@@ -97,8 +97,6 @@ import './pdfAnnotate.js';
 
 const FORCE_PAGES_LOADED_TIMEOUT = 10000; // ms
 
-const invoke = window.__TAURI__.core.invoke;
-
 const ViewOnLoad = {
   UNKNOWN: -1,
   PREVIOUS: 0, // Default value.
@@ -193,6 +191,9 @@ const PDFViewerApplication = {
 
   // Called once when the document is loaded.
   async initialize(appConfig) {
+    if (window.__TAURI__) {
+      this.invoke = window.__TAURI__.core.invoke;
+    }
     this.appConfig = appConfig;
 
     // Ensure that `Preferences`, and indirectly `AppOptions`, have initialized
@@ -711,7 +712,7 @@ const PDFViewerApplication = {
   },
 
   async annotateFile(annotations) {
-    const data = await invoke("file");
+    const data = await this.invoke("file");
     const factory = new pdfAnnotate.AnnotationFactory(data);
     for (const annotation of annotations) {
       if (annotation.annotationType == AnnotationType.HIGHLIGHT) {
@@ -811,13 +812,17 @@ const PDFViewerApplication = {
         // Initialize annotation
         this.setTitleUsingUrl(file, file);
         try {
-          const config_json = await invoke("getconfig");
+          const config_json = await this.invoke("getconfig");
           const annotations = JSON.parse(config_json);
           await this.annotateFile(annotations);
         } catch (e) {
-          console.log(e);
-          const data = await invoke("file");
-          this.open({ data });
+          // console.log(e);
+          if (this.invoke) {
+            const data = await this.invoke("file");
+            this.open({ data });
+          } else {
+            this.open({ url: file });
+          }
         }
       } else {
         this._hideViewBookmark();
@@ -1228,7 +1233,11 @@ const PDFViewerApplication = {
           totanns.push(pann);
         }
       }
-      invoke("save", { data: JSON.stringify(totanns) });
+      if (this.invoke) {
+        this.invoke("save", { data: JSON.stringify(totanns) });
+      } else {
+        console.log(totanns);
+      }
 
       // this.downloadManager.download(data, this._downloadUrl, this._docFilename);
     } catch (reason) {
