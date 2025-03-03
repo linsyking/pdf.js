@@ -150,13 +150,13 @@ class SecondaryToolbar {
         close: true,
       },
     ];
-    // if (typeof PDFJSDev === "undefined") {
-    //   buttons.push({
-    //     element: options.openFileButton,
-    //     eventName: "openfile",
-    //     close: true,
-    //   });
-    // }
+    if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+      buttons.push({
+        element: options.openFileButton,
+        eventName: "openfile",
+        close: true,
+      });
+    }
 
     this.eventBus = eventBus;
     this.opened = false;

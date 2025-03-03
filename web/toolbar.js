@@ -186,6 +186,31 @@ class Toolbar {
     this.#editorModeChanged({ mode: AnnotationEditorType.DISABLE });
   }
 
+  closeAll() {
+    const {
+      editorFreeTextButton,
+      editorHighlightButton,
+      editorInkButton,
+      editorStampButton,
+      editorSignatureButton,
+    } = this.#opts;
+    if (editorHighlightButton.classList.contains("toggled")) {
+      editorHighlightButton.click();
+    }
+    if (editorInkButton.classList.contains("toggled")) {
+      editorInkButton.click();
+    }
+    if (editorStampButton.classList.contains("toggled")) {
+      editorStampButton.click();
+    }
+    if (editorSignatureButton.classList.contains("toggled")) {
+      editorSignatureButton.click();
+    }
+    if (editorFreeTextButton.classList.contains("toggled")) {
+      editorFreeTextButton.click();
+    }
+  }
+
   #bindListeners(buttons) {
     const { eventBus } = this;
     const {

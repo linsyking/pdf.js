@@ -2901,9 +2901,11 @@ function onKeyDown(evt) {
           eventBus.dispatch("download", { source: window });
           handled = true;
           break;
-        case 27: // Esc
-          document.getElementById("editorHighlightButton").click();
-          handled = true;
+        case 79: // o
+          if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
+            eventBus.dispatch("openfile", { source: window });
+            handled = true;
+          }
           break;
       }
     }
@@ -2999,6 +3001,7 @@ function onKeyDown(evt) {
           this.secondaryToolbar.close();
           handled = true;
         }
+        this.toolbar.closeAll();
         if (!this.supportsIntegratedFind && this.findBar?.opened) {
           this.findBar.close();
           handled = true;
