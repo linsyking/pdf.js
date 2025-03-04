@@ -192,7 +192,7 @@ const PDFViewerApplication = {
   // Called once when the document is loaded.
   async initialize(appConfig) {
     if (window.__TAURI__) {
-      this.invoke = window.__TAURI__.core.invoke;
+      this.tauri = window.__TAURI__;
     }
     this.appConfig = appConfig;
 
@@ -712,7 +712,7 @@ const PDFViewerApplication = {
   },
 
   async annotateFile(annotations) {
-    const data = await this.invoke("file");
+    const data = await this.tauri.core.invoke("file");
     const factory = new pdfAnnotate.AnnotationFactory(data);
     for (const annotation of annotations) {
       if (annotation.annotationType == AnnotationType.HIGHLIGHT) {
@@ -812,13 +812,13 @@ const PDFViewerApplication = {
         // Initialize annotation
         this.setTitleUsingUrl(file, file);
         try {
-          const config_json = await this.invoke("getconfig");
+          const config_json = await this.tauri.core.invoke("getconfig");
           const annotations = JSON.parse(config_json);
           await this.annotateFile(annotations);
         } catch (e) {
           // console.log(e);
-          if (this.invoke) {
-            const data = await this.invoke("file");
+          if (this.tauri) {
+            const data = await this.tauri.core.invoke("file");
             this.open({ data });
           } else {
             this.open({ url: file });
@@ -1233,8 +1233,8 @@ const PDFViewerApplication = {
           totanns.push(pann);
         }
       }
-      if (this.invoke) {
-        this.invoke("save", { data: JSON.stringify(totanns) });
+      if (this.tauri) {
+        this.tauri.core.invoke("save", { data: JSON.stringify(totanns) });
       } else {
         console.log(totanns);
       }
@@ -2394,8 +2394,28 @@ if (typeof PDFJSDev === "undefined" || PDFJSDev.test("GENERIC")) {
   };
 
   // eslint-disable-next-line no-var
-  var onOpenFile = function (evt) {
-    this._openFileInput?.click();
+  var onOpenFile = async function (evt) {
+    if (this.tauri) {
+      const { open, message } = this.tauri.dialog;
+
+      const file = await open({
+        multiple: false,
+        directory: false,
+        filters: [{
+          name: 'PDF file',
+          extensions: ['pdf']
+        }]
+      });
+      console.log(file);
+      try {
+        await this.tauri.core.invoke('changefile', { file });
+        // Open the new file
+      } catch (_) {
+        message('File not found', { title: 'pdfannotator', type: 'error' });
+      }
+    } else {
+      this._openFileInput?.click();
+    }
   };
 }
 
